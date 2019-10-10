@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-    name: $namespace
+    name: org2
 
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  namespace: $namespace
-  name:	$podName
+  namespace: org2
+  name:	peer1-org2
   
 spec:
   replicas: 1
@@ -18,16 +18,16 @@ spec:
       labels:
        app: hyperledger
        role: peer
-       peer-id: $peerID
-       org: $namespace
+       peer-id: peer1
+       org: org2
     spec:
       containers:
-      - name: couchdb-$peerID
+      - name: couchdb-peer1
         image: hyperledger/fabric-couchdb:x86_64-1.0.0
         ports:
           - containerPort: 5984
   
-      - name: $podName
+      - name: peer1-org2
         image: hyperledger/fabric-peer:latest
         ports:
          - containerPort: 7051
@@ -41,29 +41,29 @@ spec:
         - name: CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS
           value: "localhost:5984"
         - name: CORE_PEER_ADDRESS
-          value: $peerID.$namespace:7051
+          value: peer1.org2:7051
         - name: CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE 
           value: bridge 
         - name: CORE_PEER_ADDRESSAUTODETECT
           value: "true"		
 #        - name: CORE_PEER_CHAINCODEADDRESS
-#          value: $peerID.$namespace:7052
+#          value: peer1.org2:7052
 #        - name: CORE_PEER_CHAINCODELISTENADDRESS
 #          value: 0.0.0.0:7052
         - name: CORE_PEER_GOSSIP_BOOTSTRAP
           value: 0.0.0.0:7051
         - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
-          value: $peerID.$namespace:7051
+          value: peer1.org2:7051
         - name: CORE_PEER_GOSSIP_ORGLEADER
           value: "false"
         - name: CORE_PEER_GOSSIP_USELEADERELECTION
           value: "true"
         - name: CORE_PEER_ID
-          value: $peerID.$namespace
+          value: peer1.org2
         - name: CORE_PEER_LISTENADDRESS
           value: 0.0.0.0:7051
         - name: CORE_PEER_LOCALMSPID
-          value: $localMSPID
+          value: Org2MSP
         - name: CORE_PEER_PROFILE_ENABLED
           value: "true"
         - name: CORE_PEER_TLS_CERT_FILE
@@ -82,31 +82,31 @@ spec:
         resources: {}
         volumeMounts:
         - mountPath: /host/var/run/
-          name: $peerID-$namespace-claim0
+          name: peer1-org2-claim0
         - mountPath: /etc/hyperledger/fabric/msp
-          name: $peerID-$namespace-claim1
+          name: peer1-org2-claim1
         - mountPath: /etc/hyperledger/fabric/tls
-          name: $peerID-$namespace-claim2
+          name: peer1-org2-claim2
         - mountPath: /var/hyperledger/production
-          name: $peerID-$namespace
+          name: peer1-org2
         workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
       restartPolicy: Always
       volumes:
-      - name: $peerID-$namespace-claim0
+      - name: peer1-org2-claim0
         hostPath:
           path: /var/run/ 
           type: Directory
-      - name: $peerID-$namespace-claim1
+      - name: peer1-org2-claim1
         hostPath:
-          path: $baseDir/crypto-config/peerOrganizations/$namespace/peers/$peerID.$namespace/msp 
+          path: /home/admin1/k8s/test/HF-On-K8S/SingleNodeSetup/crypto-config/peerOrganizations/org2/peers/peer1.org2/msp 
           type: Directory
-      - name: $peerID-$namespace-claim2
+      - name: peer1-org2-claim2
         hostPath:
-          path: $baseDir/crypto-config/peerOrganizations/$namespace/peers/$peerID.$namespace/tls 
+          path: /home/admin1/k8s/test/HF-On-K8S/SingleNodeSetup/crypto-config/peerOrganizations/org2/peers/peer1.org2/tls 
           type: Directory
-      - name: $peerID-$namespace
+      - name: peer1-org2
         hostPath:
-          path: $baseDir/volumes/$peerID.$namespace 
+          path: /home/admin1/k8s/test/HF-On-K8S/SingleNodeSetup/volumes/peer1.org2 
           type: Directory
 status: {}
 
@@ -115,14 +115,14 @@ status: {}
 apiVersion: v1
 kind: Service
 metadata:
-   namespace: $namespace
-   name: $peerID
+   namespace: org2
+   name: peer1
 spec:
  selector:
    app: hyperledger
    role: peer
-   peer-id: $peerID
-   org: $namespace
+   peer-id: peer1
+   org: org2
  type: NodePort
  ports:
    - name: externale-listen-endpoint

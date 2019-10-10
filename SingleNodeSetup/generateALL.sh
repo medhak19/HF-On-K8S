@@ -53,4 +53,4 @@ function clean () {
 clean
 generateCerts
 generateChannelArtifacts
-generateK8sYaml
+#generateK8sYaml
