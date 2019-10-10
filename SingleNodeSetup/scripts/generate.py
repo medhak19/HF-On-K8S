@@ -9,7 +9,8 @@ ORDERER = os.path.join(BASEDIR, "../crypto-config/ordererOrganizations")
 PEER = os.path.join(BASEDIR, "../crypto-config/peerOrganizations")
 DESTDIR = os.path.join(BASEDIR, "../deploy-yamls");
 
-WORKERNODE_BASE_DIR="/home/admin1/k8s/hf-on-k8s"
+#Change this value as per your worker node directory
+WORKERNODE_BASE_DIR="/home/admin1/k8s/test"
 
 #generateNamespacePod generate the yaml file to create the namespace for k8s, and return a set of paths which indicate the location of org files  
 

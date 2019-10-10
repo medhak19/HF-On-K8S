@@ -50,7 +50,7 @@ function clean () {
 	
 #}
 
-#clean
-#generateCerts
+clean
+generateCerts
 generateChannelArtifacts
-#generateK8sYaml
+generateK8sYaml
