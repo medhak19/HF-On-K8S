@@ -1,8 +1,2 @@
-Introduction
-
-K8S Environment Details
-
-Hyperledger Fabric Details
-
-Steps
+Refer HF-On-K8S-SingleNodeSetup-ReadMe.doc
 
