@@ -43,7 +43,7 @@ function generateChannelArtifacts() {
 }
 
 function generateK8sYaml (){
-	python3.5 transform/generate.py
+	python3.5 scripts/generate.py
 }
 
 # Print the usage message
@@ -88,4 +88,4 @@ echo "Consensus type: ${CONSENSUS_TYPE}";
 clean
 generateCerts
 generateChannelArtifacts
-#generateK8sYaml
+generateK8sYaml
