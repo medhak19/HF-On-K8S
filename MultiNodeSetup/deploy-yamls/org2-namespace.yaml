@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: org2
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: org2-pv
+  labels:
+    org: org2
+spec:
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    path: /opt/share/crypto-config/peerOrganizations/org2
+    server: 10.88.68.51  #change to your nfs server ip here
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ namespace: org2
+ name: org2-pv
+spec:
+ accessModes:
+   - ReadWriteMany
+ resources:
+   requests:
+     storage: 10Mi
+ selector:
+   matchLabels:
+     org: org2   
+
+---

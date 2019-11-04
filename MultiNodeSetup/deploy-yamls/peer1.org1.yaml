@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: org1
+  name:	peer1-org1
+  
+spec:
+  selector:
+    matchLabels:
+      app: hyperledger
+      role: peer
+      peer-id: peer1
+      org: org1	  
+  replicas: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+       app: hyperledger
+       role: peer
+       peer-id: peer1
+       org: org1
+    spec:
+      containers:
+      - name: couchdb-peer1
+        image: hyperledger/fabric-couchdb:x86_64-1.0.0
+        ports:
+          - containerPort: 5984
+  
+      - name: peer1-org1
+        image: hyperledger/fabric-peer:latest
+        ports:
+         - containerPort: 7051
+         - containerPort: 7052
+         - containerPort: 7053		
+        command: ["peer"]
+        args: ["node","start"]
+        env:
+        - name: CORE_LEDGER_STATE_STATEDATABASE
+          value: "CouchDB"
+        - name: CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS
+          value: "localhost:5984"
+        - name: CORE_PEER_ADDRESS
+          value: peer1.org1:7051
+        - name: CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE 
+          value: bridge 
+        - name: CORE_PEER_ADDRESSAUTODETECT
+          value: "true"		
+#        - name: CORE_PEER_CHAINCODEADDRESS
+#          value: peer1.org1:7052
+#        - name: CORE_PEER_CHAINCODELISTENADDRESS
+#          value: 0.0.0.0:7052
+        - name: CORE_PEER_GOSSIP_BOOTSTRAP
+          value: 0.0.0.0:7051
+        - name: CORE_PEER_GOSSIP_EXTERNALENDPOINT
+          value: peer1.org1:7051
+        - name: CORE_PEER_GOSSIP_ORGLEADER
+          value: "false"
+        - name: CORE_PEER_GOSSIP_USELEADERELECTION
+          value: "true"
+        - name: CORE_PEER_ID
+          value: peer1.org1
+        - name: CORE_PEER_LISTENADDRESS
+          value: 0.0.0.0:7051
+        - name: CORE_PEER_LOCALMSPID
+          value: Org1MSP
+        - name: CORE_PEER_PROFILE_ENABLED
+          value: "true"
+        - name: CORE_PEER_TLS_CERT_FILE
+          value: /etc/hyperledger/fabric/tls/server.crt
+        - name: CORE_PEER_TLS_ENABLED
+          value: "true"
+        - name: CORE_PEER_TLS_KEY_FILE
+          value: /etc/hyperledger/fabric/tls/server.key
+        - name: CORE_PEER_TLS_ROOTCERT_FILE
+          value: /etc/hyperledger/fabric/tls/ca.crt
+        - name: CORE_VM_ENDPOINT
+          value: unix:///host/var/run/docker.sock
+        - name: FABRIC_LOGGING_SPEC
+          value: INFO
+        
+        resources: {}
+        volumeMounts:
+        - mountPath: /host/var/run/
+          name: peer1-org1-claim0
+        - mountPath: /etc/hyperledger/fabric/msp
+          subPath: peers/peer1.org1/msp		
+          name: certificate
+        - mountPath: /etc/hyperledger/fabric/tls
+          subPath: peers/peer1.org1/tls		
+          name: certificate
+        - mountPath: /var/hyperledger/production
+          subPath: peer1.org1
+          name: certificate
+        workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+      restartPolicy: Always
+      volumes:
+      - name: peer1-org1-claim0
+        hostPath:
+          path: /var/run/ 
+          type: Directory
+      - name: certificate
+        persistentVolumeClaim:
+            claimName: org1-pv
+status: {}
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+   namespace: org1
+   name: peer1
+spec:
+ selector:
+   app: hyperledger
+   role: peer
+   peer-id: peer1
+   org: org1
+ type: NodePort
+ ports:
+   - name: externale-listen-endpoint
+     protocol: TCP
+     port: 7051
+     targetPort: 7051
+   - name: chaincode-listen
+     protocol: TCP
+     port: 7052
+     targetPort: 7052
+   - name: peer-statedb-couchdb
+     protocol: TCP
+     port: 5984
+     targetPort: 5984

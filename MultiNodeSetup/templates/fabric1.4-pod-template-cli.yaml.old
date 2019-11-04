@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+    name: $artifactsName
+spec:
+    capacity:
+       storage: 500Mi
+    accessModes:
+       - ReadWriteMany
+    nfs: 
+      path: /opt/share
+      server: 10.88.68.51 #change to your nfs server ip here
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    namespace: $namespace
+    name: $artifactsName
+spec:
+   accessModes:
+     - ReadWriteMany
+   resources:
+      requests:
+        storage: 10Mi
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cli
+  namespace: $namespace
+spec:
+  selector:
+    matchLabels:
+      app: hyperledger
+      role: cli
+      org: $namespace	  
+  
+  replicas: 1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: hyperledger
+        role: cli
+        org: $namespace
+    spec:
+      containers:
+      - args:
+        - /bin/bash
+        env:
+        - name: CORE_PEER_ADDRESS
+          value: $peerID.$namespace:7051
+        - name: CORE_PEER_ID
+          value: cli
+        - name: CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE
+          value: bridge
+        - name: CORE_PEER_LOCALMSPID
+          value: $localMSPID
+        - name: CORE_PEER_MSPCONFIGPATH
+          value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/$namespace/users/Admin@$namespace/msp
+        - name: CORE_PEER_TLS_CERT_FILE
+          value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/$namespace/peers/$peerID.$namespace/tls/server.crt
+        - name: CORE_PEER_TLS_ENABLED
+          value: "true"
+        - name: CORE_PEER_TLS_KEY_FILE
+          value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/$namespace/peers/$peerID.$namespace/tls/server.key
+        - name: CORE_PEER_TLS_ROOTCERT_FILE
+          value: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/$namespace/peers/$peerID.$namespace/tls/ca.crt
+        - name: CORE_VM_ENDPOINT
+          value: unix:///host/var/run/docker.sock
+        - name: FABRIC_LOGGING_SPEC
+          value: INFO
+        - name: GOPATH
+          value: /opt/gopath
+        - name: SYS_CHANNEL
+          value: byfn-sys-channel
+        image: hyperledger/fabric-tools:latest
+        name: cli
+        resources: {}
+        stdin: true
+        tty: true
+        volumeMounts:
+        - mountPath: /host/var/run/
+          name: cli-claim0
+        - mountPath: /opt/gopath/src/github.com/chaincode
+          name: artifacts
+          subPath: chaincode 
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+          name: artifacts
+          subPath: crypto-config 		  
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+          name: artifacts
+          subPath: scripts		  
+        - mountPath: /opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+          name: artifacts
+          subPath: channel-artifacts		  
+        workingDir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+      restartPolicy: Always
+      volumes:
+      - name: cli-claim0
+        hostPath:
+          path: /var/run/ 
+          type: Directory
+      - name: artifacts
+        persistentVolumeClaim:
+            claimName: $artifactsName
+status: {}
